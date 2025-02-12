@@ -1,6 +1,8 @@
 import Server from '../models/serverModel.js';
 import Channel from '../models/channelModel.js';
 import Member from '../models/memberModel.js';
+import Message from '../models/messageModel.js';
+
 import { v4 as uuidv4 } from "uuid";
 import mongoose from 'mongoose';
 
@@ -19,9 +21,8 @@ export const getAllServers = async (req, res) => {
         const needservers = [];
         for (const server of servers) {
             const member = await Member.findOne({profile: profileObjectId, server: server._id});
-            if (member?._id) {
+            if (member?._id && server.members.includes(member._id)) {
                 needservers.push(server);
-
             }
         }
         // const servers = await Server.find({ profile: profileObjectId });
@@ -136,10 +137,29 @@ export const updateServer = async (req, res) => {
 }
 
 
-export const deleteServer = (req, res) => {
+export const deleteServer = async (req, res) => {
     try {
         const profile = new mongoose.Types.ObjectId(req?.user?.id);
         if (!profile) return res.status(401).json({ error: "Unauthorized" });
+        const {serverId} = req.params;
+        if (!serverId) return res.status(401).json({ error: "SERVER ID MISSING" });
+
+        const members = await Member.find({
+            server: serverId,
+        });
+        for (const member of members) {
+            await Message.findOneAndDelete({
+                member: member?._id
+            })
+            await Member.findByIdAndDelete(member?._id);
+        }
+
+        const deletedServer = await Server.findByIdAndDelete(serverId);
+
+        
+
+        res.status(200).json(deletedServer);
+
 
 
     } catch (error) {
@@ -150,6 +170,7 @@ export const deleteServer = (req, res) => {
 
 export const leaveServer = async (req, res) => {
     try {
+        // console.log('huiiiiiiiiii')
         const { serverId } = req.params;
         const profile = new mongoose.Types.ObjectId(req?.user?.id);
 
@@ -160,19 +181,22 @@ export const leaveServer = async (req, res) => {
             profile,
             server: serverId,
         });
-        if (!member) return res.status(404).json({ error: "Member MISSING" });
 
+        if (!member) return res.status(404).json({ error: "Member MISSING" });
+        console.log('before', member);
         const server = await Server.findOneAndUpdate(
             {
                 _id: serverId,
                 profile: { $ne: profile },
-                members: { $nin: profile }
+                // members: { $nin: member?._id }
             },
             {
-                $pull: { members: member?._id } // حذف العضو من المصفوفة
+                $pull: { members: new mongoose.Types.ObjectId(member?._id) } // حذف العضو من المصفوفة
             },
             { new: true }
         );
+        const deletedMember = await Member.findByIdAndDelete(member?._id);
+        console.log('after', server);
 
         if (!server) {
             return res.status(404).json({ error: "Server not found or unauthorized" });

@@ -17,7 +17,7 @@ router.put('/upload', uploadPhoto.array("images", 10), productImageResize, uploa
 router.put('/:serverId', authMiddleware, updateServer); // تحديث بيانات السيرفر
 router.put('/:serverId/invite-code', authMiddleware, InviteCodeServer); // تحديث كود الدعوة
 
-router.delete('/:serverId', authMiddleware, deleteServer); // حذف السيرفر
+router.delete('/:serverId/delete-server', authMiddleware, deleteServer); // حذف السيرفر
 router.delete('/:serverId/leave-server', authMiddleware, leaveServer); // مغادرة السيرفر
 
 

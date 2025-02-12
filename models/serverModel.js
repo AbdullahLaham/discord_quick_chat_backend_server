@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-
+import Member from './memberModel.js'
 
 const serverSchema = new mongoose.Schema({
     name: {
@@ -15,3 +15,18 @@ const serverSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 export default mongoose.model('Server', serverSchema);
+
+
+serverSchema.pre('findOneAndUpdate', async function (next) {
+    const update = this.getUpdate();
+    
+    if (update && update.$pull && update.$pull.members) {
+      const memberId = update.$pull.members;
+  
+      // Delete the corresponding Member document
+      await Member.findByIdAndDelete(memberId);
+    }
+  
+    next();
+  });
+  

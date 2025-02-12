@@ -12,7 +12,8 @@ import authRoutes from './routes/authRoute.js';
 import userRoutes from './routes/userRoute.js';
 import serverRoutes from './routes/serverRoute.js';
 import channelRoutes from './routes/channelRoute.js';
-import messageRoutes from './routes/messageRoute.js'
+import messageRoutes from './routes/messageRoute.js';
+import conversationRoutes from './routes/conversationRoute.js';
 import { dbConnect } from './config/dbConnect.js';
 import { Server } from 'socket.io';
 import http from 'http';
@@ -40,6 +41,7 @@ app.use(cors());
 app.use('/messages', messageRoutes);
 app.use('/servers', serverRoutes);
 app.use('/channels', channelRoutes);
+app.use('/conversations', conversationRoutes);
 
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
